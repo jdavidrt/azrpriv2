@@ -1,59 +1,46 @@
-﻿# --------------------------------------------------------------------------
-#
-# Copyright (c) Microsoft Corporation. All rights reserved.
-#
-# The MIT License (MIT)
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the ""Software""), to
-# deal in the Software without restriction, including without limitation the
-# rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-# sell copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED *AS IS*, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-# FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-# IN THE SOFTWARE.
-#
-# --------------------------------------------------------------------------
+import os
+import re
 
-from setuptools import setup
+from setuptools import find_packages, setup
+
+
+def find_version():
+    file_dir = os.path.dirname(__file__)
+    with open(os.path.join(file_dir, "auth0", "__init__.py")) as f:
+        version = re.search(r'^__version__ = [\'"]([^\'"]*)[\'"]', f.read())
+        if version:
+            return version.group(1)
+        else:
+            raise RuntimeError("Unable to find version string.")
+
+
+with open("README.md", encoding="utf-8") as f:
+    long_description = f.read()
+
 
 setup(
-    name='msrest',
-    version='0.4.14',
-    author='Microsoft Corporation',
-    packages=['msrest'],
-    url=("https://github.com/Azure/msrest-for-python"),
-    license='MIT License',
-    description='AutoRest swagger generator Python client runtime.',
-    long_description=open('README.rst').read(),
+    name="auth0-python",
+    version=find_version(),
+    description="Auth0 Python SDK",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
+    author="Auth0",
+    author_email="support@auth0.com",
+    license="MIT",
+    packages=find_packages(),
+    install_requires=["requests>=2.14.0", "pyjwt[crypto]>=2.6.0"],
+    extras_require={"test": ["coverage", "pre-commit"]},
+    python_requires=">=3.7",
     classifiers=[
-        'Development Status :: 4 - Beta',
-        'Programming Language :: Python',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
-        'Programming Language :: Python :: 3.6',
-        'License :: OSI Approved :: MIT License',
-        'Topic :: Software Development'],
-    install_requires=[
-        "requests~=2.14",
-        "requests_oauthlib>=0.5.0",
-        "isodate>=0.5.4",
-        "certifi>=2017.4.17",
+        "Development Status :: 5 - Production/Stable",
+        "Intended Audience :: Developers",
+        "Operating System :: OS Independent",
+        "License :: OSI Approved :: MIT License",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
     ],
-    extras_require={
-        ":python_version<'3.4'": ['enum34>=1.0.4'],
-    }
+    url="https://github.com/auth0/auth0-python",
 )

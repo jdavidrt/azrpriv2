@@ -33,7 +33,30 @@ RUN adduser --disabled-password --gecos 'dog' nonroot
 
 RUN /bin/bash -c "set -euxo pipefail && \
     source /opt/miniconda3/bin/activate && \
-    conda create -n testbed python=3.6 pytest -y && \
+    conda create -n testbed python=3.9 -y && \
+    echo 'aiohttp' > $HOME/requirements.txt && \
+    echo 'aioresponses' >> $HOME/requirements.txt && \
+    echo 'black' >> $HOME/requirements.txt && \
+    echo 'callee' >> $HOME/requirements.txt && \
+    echo 'click' >> $HOME/requirements.txt && \
+    echo 'coverage' >> $HOME/requirements.txt && \
+    echo 'cryptography' >> $HOME/requirements.txt && \
+    echo 'flake8' >> $HOME/requirements.txt && \
+    echo 'isort' >> $HOME/requirements.txt && \
+    echo 'mock' >> $HOME/requirements.txt && \
+    echo 'pre-commit' >> $HOME/requirements.txt && \
+    echo 'pyjwt' >> $HOME/requirements.txt && \
+    echo 'pytest' >> $HOME/requirements.txt && \
+    echo 'pytest-mock' >> $HOME/requirements.txt && \
+    echo 'pyupgrade' >> $HOME/requirements.txt && \
+    echo 'requests' >> $HOME/requirements.txt && \
+    echo 'Sphinx' >> $HOME/requirements.txt && \
+    echo 'sphinx_rtd_theme' >> $HOME/requirements.txt && \
+    echo 'sphinx_mdinclude' >> $HOME/requirements.txt && \
+    echo 'setuptools>=65.5.1 # not directly required, pinned by Snyk to avoid a vulnerability' >> $HOME/requirements.txt && \
+    conda activate testbed && \
+    python -m pip install -r $HOME/requirements.txt && \
+    rm $HOME/requirements.txt && \
     conda activate testbed && \
     python -m pip install pytest"
 

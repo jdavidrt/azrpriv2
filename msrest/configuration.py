@@ -51,9 +51,12 @@ class Configuration(object):
     :param str filepath: Path to existing config file (optional).
     """
 
-    def __init__(self, base_url, filepath=None):
+    def __init__(self, base_url, filepath=None, client_side_validation=True):
         # Service
         self.base_url = base_url
+
+        # Client-side validation flag
+        self.client_side_validation = client_side_validation
 
         # Communication configuration
         self.connection = ClientConnection()
@@ -105,6 +108,7 @@ class Configuration(object):
         :rtype: None
         """
         sections = [
+            "General",
             "Connection",
             "Proxies",
             "RetryPolicy",
@@ -112,7 +116,9 @@ class Configuration(object):
         for section in sections:
             self._config.add_section(section)
 
-        self._config.set("Connection", "base_url", self.base_url)
+        self._config.set("General", "base_url", self.base_url)
+        self._config.set("General", "client_side_validation", self.client_side_validation)
+        
         self._config.set("Connection", "timeout", self.connection.timeout)
         self._config.set("Connection", "verify", self.connection.verify)
         self._config.set("Connection", "cert", self.connection.cert)
@@ -149,8 +155,16 @@ class Configuration(object):
         try:
             self._config.read(filepath)
 
-            self.base_url = \
-                self._config.get("Connection", "base_url")
+            # Try loading from General section first, fall back to Connection for base_url
+            try:
+                self.base_url = self._config.get("General", "base_url")
+                self.client_side_validation = self._config.getboolean("General", "client_side_validation")
+            except (NoOptionError, configparser.NoSectionError):
+                # Backward compatibility - try loading base_url from Connection section
+                self.base_url = self._config.get("Connection", "base_url")
+                # Default to True if not present
+                self.client_side_validation = True
+
             self.connection.timeout = \
                 self._config.getint("Connection", "timeout")
             self.connection.verify = \
@@ -173,7 +187,7 @@ class Configuration(object):
             self.redirect_policy.allow = \
                 self._config.getboolean("RedirectPolicy", "allow")
             self.redirect_policy.max_redirects = \
-                self._config.set("RedirectPolicy", "max_redirects")
+                self._config.getint("RedirectPolicy", "max_redirects")
 
         except (ValueError, EnvironmentError, NoOptionError):
             error = "Supplied config file incompatible."

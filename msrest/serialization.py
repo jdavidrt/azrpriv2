@@ -333,7 +333,7 @@ class Serializer(object):
         "multiple": lambda x, y: x % y != 0
         }
 
-    def __init__(self, classes=None):
+    def __init__(self, classes=None, client_side_validation=True):
         self.serialize_type = {
             'iso-8601': Serializer.serialize_iso,
             'rfc-1123': Serializer.serialize_rfc,
@@ -350,6 +350,7 @@ class Serializer(object):
             }
         self.dependencies = dict(classes) if classes else {}
         self.key_transformer = full_restapi_key_transformer
+        self.client_side_validation = client_side_validation
 
     def _serialize(self, target_obj, data_type=None, **kwargs):
         """Serialize data into a string according to type.
@@ -422,8 +423,12 @@ class Serializer(object):
         :raises: SerializationError if serialization fails.
         :raises: ValueError if data is None
         """
+        # Check for None only if validation is enabled
         if data is None:
-            raise ValidationError("required", "body", True)
+            if self.client_side_validation:
+                raise ValidationError("required", "body", True)
+            else:
+                return None
 
         # Just in case this is a dict
         internal_data_type = data_type.strip('[]{}')
@@ -440,9 +445,12 @@ class Serializer(object):
                 raise_with_traceback(
                     SerializationError, "Unable to build a model: "+str(err), err)
 
-        errors = _recursive_validate(data_type, data)
-        if errors:
-            raise errors[0]
+        # Only validate if client_side_validation is enabled
+        if self.client_side_validation:
+            errors = _recursive_validate(data_type, data)
+            if errors:
+                raise errors[0]
+        
         return self._serialize(data, data_type, **kwargs)
 
     def url(self, name, data, data_type, **kwargs):
@@ -454,7 +462,11 @@ class Serializer(object):
         :raises: TypeError if serialization fails.
         :raises: ValueError if data is None
         """
-        data = self.validate(data, name, required=True, **kwargs)
+        if self.client_side_validation:
+            data = self.validate(data, name, required=True, **kwargs)
+        elif data is None:
+            raise ValueError("Parameter {} cannot be None".format(name))
+            
         try:
             output = self.serialize_data(data, data_type, **kwargs)
             if data_type == 'bool':
@@ -478,7 +490,11 @@ class Serializer(object):
         :raises: TypeError if serialization fails.
         :raises: ValueError if data is None
         """
-        data = self.validate(data, name, required=True, **kwargs)
+        if self.client_side_validation:
+            data = self.validate(data, name, required=True, **kwargs)
+        elif data is None:
+            raise ValueError("Parameter {} cannot be None".format(name))
+            
         try:
             if data_type in ['[str]']:
                 data = ["" if d is None else d for d in data]
@@ -504,7 +520,11 @@ class Serializer(object):
         :raises: TypeError if serialization fails.
         :raises: ValueError if data is None
         """
-        data = self.validate(data, name, required=True, **kwargs)
+        if self.client_side_validation:
+            data = self.validate(data, name, required=True, **kwargs)
+        elif data is None:
+            raise ValueError("Parameter {} cannot be None".format(name))
+            
         try:
             if data_type in ['[str]']:
                 data = ["" if d is None else d for d in data]
@@ -519,7 +539,11 @@ class Serializer(object):
 
     @classmethod
     def validate(cls, data, name, **kwargs):
-        """Validate that a piece of data meets certain conditions"""
+        """Validate that a piece of data meets certain conditions.
+        
+        This is a class method so it can be called without client_side_validation check.
+        Instance method calls should check client_side_validation flag first.
+        """
         required = kwargs.get('required', False)
         if required and data is None:
             raise ValidationError("required", name, True)
