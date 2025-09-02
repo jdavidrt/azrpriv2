@@ -1283,96 +1283,104 @@ class TestTimelagFunction(object):
 
 
 class TestCrossspectrumAstropyRoundtrip:
-    """Test Astropy table roundtrip functionality for Crossspectrum classes"""
-    
+    """ Test Astropy table roundtrip functionality for Crossspctrum"""
+
     @classmethod
     def setup_class(cls):
         """Set up test data for roundtrip tests"""
         # Create sample light curves
         dt = 0.1
-        t = np.arange(0, 100, dt)
+        t = np.arange(0 , 500, dt)
         np.random.seed(42)
         counts1 = 100 + 10 * np.random.normal(size=len(t))
         counts2 = 100 + 10 * np.random.normal(size=len(t))
-        
-        cls.lc1 = Lightcurve(t, counts1, dt=dt, gti=[[0, 100]])
-        cls.lc2 = Lightcurve(t, counts2, dt=dt, gti=[[0, 100]])
-    
+
+        cls.lc1 = Lightcurve(t, counts1, dt=dt, gti=[[0, 500]])
+        cls.lc2 = Lightcurve(t, counts2, dt=dt, gti=[[0, 500]])
+
     def test_crossspectrum_astropy_roundtrip(self):
-        """Test Crossspectrum roundtrip to/from Astropy table"""
-        # Create test data (in case setup_class didn't work)
-        if not hasattr(self, 'lc1'):
-            dt = 0.1
-            t = np.arange(0, 100, dt)
-            np.random.seed(42)
-            counts1 = 100 + 10 * np.random.normal(size=len(t))
-            counts2 = 100 + 10 * np.random.normal(size=len(t))
-            
-            self.lc1 = Lightcurve(t, counts1, dt=dt, gti=[[0, 100]])
-            self.lc2 = Lightcurve(t, counts2, dt=dt, gti=[[0, 100]])
-        
+        """Test Crossspecctrum roundtrip to/from Astropy table"""
+        # Use pattern form successful tests - short GTI
+        tstart = 0.0
+        tend = 1.0
+        dt = 0.0001
+
+        time = np.arange(tstart + 0.5 * dt, tend + 0.5 * dt, dt)
+
+        np.random.seed(42)
+        counts1 = np.random.poisson(0.01, size = time.shape[0])
+        counts2 = np.random.negative_binomial(1, 0.09, size=time.shape[0])
+
+        lc1 = Lightcurve(time, counts1, gti=[[tstart, tend]], dt=dt)
+        lc2 = Lightcurve(time, counts2, gti=[[tstart, tend]], dt=dt)
+
         # Create Crossspectrum
-        cs = Crossspectrum(self.lc1, self.lc2, norm='leahy')
-        
+        with pytest.warns(UserWarning):
+            cs = Crossspectrum(lc1, lc2, norm='leahy')
+
         # Convert to table
         table = cs.to_astropy_table()
-        
+
         # Verify table structure
         assert 'freq' in table.columns
         assert 'power' in table.columns
-        
-        # Verify metadata
+
+        #Verify metadata
         assert table.meta['norm'] == 'leahy'
         assert table.meta['m'] == cs.m
         assert table.meta['type'] == 'crossspectrum'
-        
+
         # Test roundtrip
         cs_recovered = Crossspectrum.from_astropy_table(table)
-        
-        # Verify data integrity
+
+        #Verify data integrity
         np.testing.assert_array_equal(cs.freq, cs_recovered.freq)
         np.testing.assert_array_equal(cs.power, cs_recovered.power)
         assert cs.norm == cs_recovered.norm
         assert cs.m == cs_recovered.m
         assert cs.dt == cs_recovered.dt
-    
+
     def test_averaged_crossspectrum_astropy_roundtrip(self):
-        """Test AveragedCrossspectrum roundtrip to/from Astropy table"""
-        # Create test data (in case setup_class didn't work)
-        if not hasattr(self, 'lc1'):
-            dt = 0.1
-            t = np.arange(0, 100, dt)
-            np.random.seed(42)
-            counts1 = 100 + 10 * np.random.normal(size=len(t))
-            counts2 = 100 + 10 * np.random.normal(size=len(t))
-            
-            self.lc1 = Lightcurve(t, counts1, dt=dt, gti=[[0, 100]])
-            self.lc2 = Lightcurve(t, counts2, dt=dt, gti=[[0, 100]])
-        
+        """ Test AveragedCrossspectrum roundtrip to/from Astropy table"""
+        # Create test data directly in test method
+        tstart = 0.0
+        tend = 10.0
+        dt = 0.001
+
+        time = np.arange(tstart + 0.5 * dt, tend + 0.5 * dt, dt)
+
+        np.random.seed(42)
+        counts1 = np.random.poisson(100, size = time.shape[0])
+        counts2 = np.random.negative_binomial(100, size=time.shape[0])
+
+        lc1 = Lightcurve(time, counts1, gti=[[tstart, tend]], dt=dt)
+        lc2 = Lightcurve(time, counts2, gti=[[tstart, tend]], dt=dt)
+
         # Create AveragedCrossspectrum
-        acs = AveragedCrossspectrum(
-            self.lc1, self.lc2, 
-            segment_size=10.0, 
-            norm='leahy'
-        )
-        
+        with pytest.warns(UserWarning):
+            acs = AveragedCrossspectrum(
+                lc1, lc2,
+                segment_size=1.0,
+                norm='leahy'
+            )
+
         # Convert to table
         table = acs.to_astropy_table()
-        
+
         # Verify table structure
         assert 'freq' in table.columns
         assert 'power' in table.columns
-        
-        # Verify metadata
+
+        #Verify metadata
         assert table.meta['norm'] == 'leahy'
         assert table.meta['m'] == acs.m
-        
-        # Test roundtrip
+
+        #Test roundtrip
         acs_recovered = AveragedCrossspectrum.from_astropy_table(
             table, segment_size=10.0
         )
-        
-        # Verify data integrity
+
+        #Verify data integrity
         np.testing.assert_array_equal(acs.freq, acs_recovered.freq)
         np.testing.assert_array_equal(acs.power, acs_recovered.power)
         assert acs.norm == acs_recovered.norm
