@@ -1351,7 +1351,7 @@ class TestCrossspectrumAstropyRoundtrip:
 
         np.random.seed(42)
         counts1 = np.random.poisson(100, size = time.shape[0])
-        counts2 = np.random.negative_binomial(100, size=time.shape[0])
+        counts2 = np.random.negative_binomial(100, 0.5, size=time.shape[0])
 
         lc1 = Lightcurve(time, counts1, gti=[[tstart, tend]], dt=dt)
         lc2 = Lightcurve(time, counts2, gti=[[tstart, tend]], dt=dt)
@@ -1360,7 +1360,7 @@ class TestCrossspectrumAstropyRoundtrip:
         with pytest.warns(UserWarning):
             acs = AveragedCrossspectrum(
                 lc1, lc2,
-                segment_size=1.0,
+                segment_size=0.5,
                 norm='leahy'
             )
 
@@ -1377,7 +1377,7 @@ class TestCrossspectrumAstropyRoundtrip:
 
         #Test roundtrip
         acs_recovered = AveragedCrossspectrum.from_astropy_table(
-            table, segment_size=10.0
+            table, segment_size=0.5
         )
 
         #Verify data integrity

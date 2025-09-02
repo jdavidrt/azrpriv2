@@ -576,7 +576,7 @@ class Crossspectrum(object):
         skip_checks=False,
         legacy=False
     ):
-        self._type = None
+        self._type = 'crossspectrum'
         # for backwards compatibility
         if data1 is None:
             data1 = lc1
