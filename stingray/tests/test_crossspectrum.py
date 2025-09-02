@@ -1280,3 +1280,100 @@ class TestTimelagFunction(object):
 
         assert np.max(lag) <= np.pi
         assert np.min(lag) >= -np.pi
+
+
+class TestCrossspectrumAstropyRoundtrip:
+    """Test Astropy table roundtrip functionality for Crossspectrum classes"""
+    
+    @classmethod
+    def setup_class(cls):
+        """Set up test data for roundtrip tests"""
+        # Create sample light curves
+        dt = 0.1
+        t = np.arange(0, 100, dt)
+        np.random.seed(42)
+        counts1 = 100 + 10 * np.random.normal(size=len(t))
+        counts2 = 100 + 10 * np.random.normal(size=len(t))
+        
+        cls.lc1 = Lightcurve(t, counts1, dt=dt, gti=[[0, 100]])
+        cls.lc2 = Lightcurve(t, counts2, dt=dt, gti=[[0, 100]])
+    
+    def test_crossspectrum_astropy_roundtrip(self):
+        """Test Crossspectrum roundtrip to/from Astropy table"""
+        # Create test data (in case setup_class didn't work)
+        if not hasattr(self, 'lc1'):
+            dt = 0.1
+            t = np.arange(0, 100, dt)
+            np.random.seed(42)
+            counts1 = 100 + 10 * np.random.normal(size=len(t))
+            counts2 = 100 + 10 * np.random.normal(size=len(t))
+            
+            self.lc1 = Lightcurve(t, counts1, dt=dt, gti=[[0, 100]])
+            self.lc2 = Lightcurve(t, counts2, dt=dt, gti=[[0, 100]])
+        
+        # Create Crossspectrum
+        cs = Crossspectrum(self.lc1, self.lc2, norm='leahy')
+        
+        # Convert to table
+        table = cs.to_astropy_table()
+        
+        # Verify table structure
+        assert 'freq' in table.columns
+        assert 'power' in table.columns
+        
+        # Verify metadata
+        assert table.meta['norm'] == 'leahy'
+        assert table.meta['m'] == cs.m
+        assert table.meta['type'] == 'crossspectrum'
+        
+        # Test roundtrip
+        cs_recovered = Crossspectrum.from_astropy_table(table)
+        
+        # Verify data integrity
+        np.testing.assert_array_equal(cs.freq, cs_recovered.freq)
+        np.testing.assert_array_equal(cs.power, cs_recovered.power)
+        assert cs.norm == cs_recovered.norm
+        assert cs.m == cs_recovered.m
+        assert cs.dt == cs_recovered.dt
+    
+    def test_averaged_crossspectrum_astropy_roundtrip(self):
+        """Test AveragedCrossspectrum roundtrip to/from Astropy table"""
+        # Create test data (in case setup_class didn't work)
+        if not hasattr(self, 'lc1'):
+            dt = 0.1
+            t = np.arange(0, 100, dt)
+            np.random.seed(42)
+            counts1 = 100 + 10 * np.random.normal(size=len(t))
+            counts2 = 100 + 10 * np.random.normal(size=len(t))
+            
+            self.lc1 = Lightcurve(t, counts1, dt=dt, gti=[[0, 100]])
+            self.lc2 = Lightcurve(t, counts2, dt=dt, gti=[[0, 100]])
+        
+        # Create AveragedCrossspectrum
+        acs = AveragedCrossspectrum(
+            self.lc1, self.lc2, 
+            segment_size=10.0, 
+            norm='leahy'
+        )
+        
+        # Convert to table
+        table = acs.to_astropy_table()
+        
+        # Verify table structure
+        assert 'freq' in table.columns
+        assert 'power' in table.columns
+        
+        # Verify metadata
+        assert table.meta['norm'] == 'leahy'
+        assert table.meta['m'] == acs.m
+        
+        # Test roundtrip
+        acs_recovered = AveragedCrossspectrum.from_astropy_table(
+            table, segment_size=10.0
+        )
+        
+        # Verify data integrity
+        np.testing.assert_array_equal(acs.freq, acs_recovered.freq)
+        np.testing.assert_array_equal(acs.power, acs_recovered.power)
+        assert acs.norm == acs_recovered.norm
+        assert acs.m == acs_recovered.m

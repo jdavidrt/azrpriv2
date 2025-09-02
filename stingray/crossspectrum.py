@@ -9,6 +9,12 @@ import scipy.stats
 from astropy import log
 import matplotlib.pyplot as plt
 
+try:
+    from astropy.table import Table
+    HAS_ASTROPY = True
+except ImportError:
+    HAS_ASTROPY = False
+
 from stingray.exceptions import StingrayError
 from stingray.gti import bin_intervals_from_gtis, check_gtis, cross_two_gtis
 from stingray.largememory import createChunkedSpectra, saveData, HAS_ZARR
@@ -1718,6 +1724,94 @@ class Crossspectrum(object):
         self.fullspec = None
         return
 
+    def to_astropy_table(self):
+        """Save the Crossspectrum to an Astropy Table.
+
+        Array attributes (freq, power, power_err) are converted
+        into columns, while meta attributes (norm, dt, etc.)
+        are saved into the ``meta`` dictionary.
+
+        Returns
+        -------
+        ts : `astropy.table.Table`
+            The Astropy Table representation of the spectrum.
+        """
+        if not HAS_ASTROPY:
+            raise ImportError("Astropy is required to save to table")
+        
+        data = {}
+        
+        # Add main spectrum data as columns
+        data['freq'] = self.freq
+        data['power'] = self.power
+        if hasattr(self, 'power_err') and self.power_err is not None:
+            data['power_err'] = self.power_err
+        
+        ts = Table(data)
+        
+        # Add metadata
+        ts.meta['norm'] = self.norm
+        ts.meta['dt'] = self.dt
+        ts.meta['m'] = self.m
+        if hasattr(self, 'n') and self.n is not None:
+            ts.meta['n'] = self.n
+        if hasattr(self, 'nphots1') and self.nphots1 is not None:
+            ts.meta['nphots1'] = self.nphots1
+        if hasattr(self, 'nphots2') and self.nphots2 is not None:
+            ts.meta['nphots2'] = self.nphots2
+        if hasattr(self, 'df') and self.df is not None:
+            ts.meta['df'] = self.df
+        ts.meta['type'] = getattr(self, '_type', 'crossspectrum')
+        
+        return ts
+    
+    @staticmethod
+    def from_astropy_table(ts, **kwargs):
+        """Create a Crossspectrum object from data in an Astropy Table.
+
+        Parameters
+        ----------
+        ts : `astropy.table.Table`
+            Input table with spectrum data
+        **kwargs : dict
+            Additional parameters
+
+        Returns
+        -------
+        spectrum : `Crossspectrum`
+            The reconstructed Crossspectrum object
+        """
+        if not HAS_ASTROPY:
+            raise ImportError("Astropy is required to load from table")
+        
+        # Create new spectrum object without calling __init__
+        spectrum = Crossspectrum.__new__(Crossspectrum)
+        
+        # Set spectrum data from table columns
+        spectrum.freq = np.array(ts['freq'])
+        spectrum.power = np.array(ts['power'])
+        if 'power_err' in ts.columns:
+            spectrum.power_err = np.array(ts['power_err'])
+        else:
+            spectrum.power_err = None
+            
+        # Set metadata
+        spectrum.norm = ts.meta.get('norm', 'none')
+        spectrum.dt = ts.meta.get('dt', None)
+        spectrum.m = ts.meta.get('m', 1)
+        spectrum.n = ts.meta.get('n', None)
+        spectrum.nphots1 = ts.meta.get('nphots1', None)
+        spectrum.nphots2 = ts.meta.get('nphots2', None)
+        spectrum.df = ts.meta.get('df', None)
+        spectrum._type = ts.meta.get('type', 'crossspectrum')
+        
+        # Set other required attributes
+        spectrum.unnorm_power = None
+        spectrum.unnorm_power_err = None
+        spectrum.fullspec = None
+        
+        return spectrum
+
 class AveragedCrossspectrum(Crossspectrum):
     """
     Make an averaged cross spectrum from a light curve by segmenting two
@@ -2350,6 +2444,54 @@ class AveragedCrossspectrum(Crossspectrum):
         lag_err = ph_lag_err / (2 * np.pi * self.freq)
 
         return lag, lag_err
+    
+    @staticmethod
+    def from_astropy_table(ts, **kwargs):
+        """Create an AveragedCrossspectrum object from data in an Astropy Table.
+
+        Parameters
+        ----------
+        ts : `astropy.table.Table`
+            Input table with spectrum data
+        **kwargs : dict
+            Additional parameters
+
+        Returns
+        -------
+        spectrum : `AveragedCrossspectrum`
+            The reconstructed AveragedCrossspectrum object
+        """
+        if not HAS_ASTROPY:
+            raise ImportError("Astropy is required to load from table")
+        
+        # Create new spectrum object without calling __init__
+        spectrum = AveragedCrossspectrum.__new__(AveragedCrossspectrum)
+        
+        # Set spectrum data from table columns
+        spectrum.freq = np.array(ts['freq'])
+        spectrum.power = np.array(ts['power'])
+        if 'power_err' in ts.columns:
+            spectrum.power_err = np.array(ts['power_err'])
+        else:
+            spectrum.power_err = None
+            
+        # Set metadata
+        spectrum.norm = ts.meta.get('norm', 'none')
+        spectrum.dt = ts.meta.get('dt', None)
+        spectrum.m = ts.meta.get('m', 1)
+        spectrum.n = ts.meta.get('n', None)
+        spectrum.nphots1 = ts.meta.get('nphots1', None)
+        spectrum.nphots2 = ts.meta.get('nphots2', None)
+        spectrum.df = ts.meta.get('df', None)
+        spectrum._type = 'crossspectrum'
+        
+        # Set other required attributes for averaged spectrum
+        spectrum.unnorm_power = None
+        spectrum.unnorm_power_err = None
+        spectrum.fullspec = None
+        spectrum.segment_size = kwargs.get('segment_size', None)
+        
+        return spectrum
 
 
 def crossspectrum_from_time_array(

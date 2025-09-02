@@ -9,6 +9,11 @@ from stingray.fourier import avg_cs_from_events, avg_pds_from_events, fftfreq, g
 from stingray.fourier import poisson_level, error_on_averaged_cross_spectrum, cross_to_covariance
 from abc import ABCMeta, abstractmethod
 
+try:
+    from astropy.table import Table
+    HAS_ASTROPY = True
+except ImportError:
+    HAS_ASTROPY = False
 
 __all__ = [
     "VarEnergySpectrum",
@@ -412,6 +417,68 @@ class VarEnergySpectrum(metaclass=ABCMeta):
     def _spectrum_function(self):
         pass
 
+    def to_astropy_table(self):
+        """Save the VarEnergySpectrum to an Astropy Table.
+
+        Array attributes (energy, spectrum, spectrum_error) are converted
+        into columns, while meta attributes (freq_interval, energy_intervals, etc.)
+        are saved into the ``meta`` dictionary.
+
+        Returns
+        -------
+        ts : `astropy.table.Table`
+            The Astropy Table representation of the spectrum.
+        """
+        if not HAS_ASTROPY:
+            raise ImportError("Astropy is required to save to table")
+        
+        data = {}
+        
+        # Add main spectrum data as columns
+        data['energy'] = self.energy
+        data['spectrum'] = self.spectrum
+        if hasattr(self, 'spectrum_error') and self.spectrum_error is not None:
+            data['spectrum_error'] = self.spectrum_error
+        
+        ts = Table(data)
+        
+        # Add metadata
+        ts.meta['freq_interval'] = self.freq_interval
+        ts.meta['energy_intervals'] = self.energy_intervals
+        ts.meta['ref_band'] = self.ref_band.tolist()
+        ts.meta['bin_time'] = self.bin_time
+        ts.meta['use_pi'] = self.use_pi
+        if hasattr(self, 'segment_size') and self.segment_size is not None:
+            ts.meta['segment_size'] = self.segment_size
+        if hasattr(self, 'delta_nu') and self.delta_nu is not None:
+            ts.meta['delta_nu'] = self.delta_nu
+        ts.meta['return_complex'] = self.return_complex
+        
+        return ts
+    
+    @staticmethod
+    def from_astropy_table(ts):
+        """Create a VarEnergySpectrum object from data in an Astropy Table.
+        
+        This is a base method that should be overridden by subclasses to create
+        the appropriate spectrum type.
+
+        Parameters
+        ----------
+        ts : `astropy.table.Table`
+            Input table with spectrum data
+
+        Returns
+        -------
+        spectrum : `VarEnergySpectrum`
+            The reconstructed spectrum object
+        """
+        if not HAS_ASTROPY:
+            raise ImportError("Astropy is required to load from table")
+        
+        # This is a base class method - specific spectrum types should override this
+        raise NotImplementedError("from_astropy_table should be implemented by specific spectrum subclasses")
+
 
 class RmsSpectrum(VarEnergySpectrum):
     """Calculate the rms-Energy spectrum.
@@ -571,6 +638,57 @@ class RmsSpectrum(VarEnergySpectrum):
 
             self.spectrum[i] = rms
             self.spectrum_error[i] = rms_err
+
+    @staticmethod
+    def from_astropy_table(ts, events, **kwargs):
+        """Create an RmsSpectrum object from data in an Astropy Table.
+
+        Parameters
+        ----------
+        ts : `astropy.table.Table`
+            Input table with spectrum data
+        events : :class:`stingray.events.EventList` object
+            Events list to associate with the spectrum
+        **kwargs : dict
+            Additional parameters to pass to RmsSpectrum constructor
+
+        Returns
+        -------
+        spectrum : `RmsSpectrum`
+            The reconstructed RmsSpectrum object
+        """
+        if not HAS_ASTROPY:
+            raise ImportError("Astropy is required to load from table")
+        
+        # Extract metadata
+        freq_interval = ts.meta['freq_interval']
+        energy_intervals = ts.meta['energy_intervals']
+        bin_time = ts.meta.get('bin_time', 1)
+        use_pi = ts.meta.get('use_pi', False)
+        segment_size = ts.meta.get('segment_size', None)
+        
+        # Create new spectrum object
+        spectrum = RmsSpectrum.__new__(RmsSpectrum)
+        spectrum.events1 = events
+        spectrum.events2 = events  
+        spectrum._analyze_inputs()
+        spectrum.freq_interval = freq_interval
+        spectrum.use_pi = use_pi
+        spectrum.bin_time = bin_time
+        spectrum.energy_intervals = energy_intervals
+        spectrum.ref_band = np.asarray(ts.meta.get('ref_band', [0, np.inf]))
+        spectrum.segment_size = segment_size
+        spectrum.delta_nu = ts.meta.get('delta_nu', None)
+        spectrum.return_complex = ts.meta.get('return_complex', False)
+        
+        # Set spectrum data from table columns
+        spectrum.spectrum = np.array(ts['spectrum'])
+        if 'spectrum_error' in ts.columns:
+            spectrum.spectrum_error = np.array(ts['spectrum_error'])
+        else:
+            spectrum.spectrum_error = np.zeros_like(spectrum.spectrum) + np.nan
+            
+        return spectrum
 
 
 RmsEnergySpectrum = RmsSpectrum
