@@ -1,0 +1,14 @@
+{
+  "workbench.colorCustomizations": {
+    "titleBar.activeBackground": "#FF6B35",
+    "titleBar.activeForeground": "#FFFFFF",
+    "titleBar.inactiveBackground": "#CC5429",
+    "titleBar.inactiveForeground": "#CCCCCC",
+    "statusBar.background": "#FF6B35",
+    "statusBar.foreground": "#FFFFFF",
+    "activityBar.background": "#FF4500",
+    "activityBar.foreground": "#FFFFFF"
+  },
+  "window.titleBarStyle": "custom",
+  "window.title": "${rootName} - ${activeEditorShort}"
+}
