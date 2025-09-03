@@ -125,12 +125,103 @@ All thoughts, need to be done and redacted like you where thinking before the ac
 
 ## Problem
 
-_[To be populated manually]_
+Check from_lc_iterable and from_lightcurve for a single light curve
 
 ## Repository Info
 
-_[To be populated after /init command execution]_
+### Project Overview
+Stingray is a spectral-timing software package for astrophysical X-ray (and other) data, providing tools for:
+- Time series methods (power spectra, cross spectra, covariance spectra, lags)
+- FITS data file loading
+- Light curve and event list simulation
+
+### Development Environment
+
+#### Python Versions
+- Supported Python versions: 3.6 - 3.10
+- Uses setuptools and setuptools_scm for package management
+
+#### Key Dependencies
+- numpy (1.16 - 1.18)
+- astropy (versions 3 - 5, with LTS support)
+- pytest for testing
+- tox for test environment management
+
+### Development Commands
+
+#### Testing
+```bash
+# Run full test suite
+tox
+
+# Run tests for a specific Python version and configuration
+tox -e py39-test
+
+# Run tests directly with pytest
+pip install -e .[test]
+pytest
+
+# Run tests with coverage
+tox -e py39-test-cov
+```
+
+#### Documentation
+```bash
+# Install documentation dependencies
+pip install -e .[docs]
+
+# Generate documentation
+cd docs
+make html
+
+# Or use tox
+tox -e build_docs
+```
+
+#### Code Style
+```bash
+# Run code style checks
+tox -e codestyle
+# or
+flake8 stingray --max-line-length=100
+```
+
+### Project Structure
+- `stingray/`: Main package directory
+- `docs/`: Documentation source files
+- `tests/`: Test suite
+- `setup.py`, `setup.cfg`: Package configuration
+- `tox.ini`: Test environment configuration
+
+### Specific Notes
+- Uses Astropy guidelines for development
+- Comprehensive test suite with multiple dependency and version combinations
+- Aims to provide advanced spectral timing techniques with robust statistical framework
 
 ## Proposed Solution
 
-_[To be populated after problem analysis]_
+The functions `from_lc_iterable` and `from_lightcurve` are similar methods for calculating power/cross spectra, with key differences:
+
+1. `from_lc_iterable`:
+   - Accepts an iterable of multiple `Lightcurve` objects or numpy arrays
+   - Designed for processing multiple light curves at once
+   - Supports more complex input scenarios
+
+2. `from_lightcurve`:
+   - Accepts a single `Lightcurve` object
+   - Simpler interface for single light curve analysis
+   - Directly computes spectrum for one light curve
+
+### Key Differences
+- Input type (iterable vs single)
+- Flexibility of processing
+- Normalization and mean handling
+
+### Recommendations
+- Use `from_lc_iterable` for multiple or complex light curve inputs
+- Use `from_lightcurve` for straightforward, single light curve analysis
+
+### Test Strategy
+- Verify single light curve processing
+- Check normalization and segment handling
+- Validate statistical computations

@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(cat:*)",
+      "Read(\\Users\\jdk_l\\OneDrive\\Documents\\FullTrace\\azr\\azrpriv/**)"
     ],
     "deny": [],
     "ask": []
