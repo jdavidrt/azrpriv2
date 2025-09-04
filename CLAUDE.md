@@ -1,6 +1,8 @@
 # CLAUDE.md
 
 ## 🌟 Execution Overview
+Stable commmit (ignore this info)
+(https://github.com/jdavidrt/azrpriv2/commit/496636c6a2bf1d35b75e18b2a381ef881a78043b)
 
 - **Description**: You will help me solve a specific _Problem_, following the solution guide and the thought process.
 - **Thought Process**:
