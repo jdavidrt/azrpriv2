@@ -180,4 +180,42 @@ Focus on information that would be crucial for understanding the project's struc
 
 ## Proposed Solution
 
-[Now, analyze the problem on the Problem section of CLAUDE.md and add here a proposed solution]
+[Analyze the problem described in the Problem section of CLAUDE.md and provide a comprehensive proposed solution. Structure your response as follows:
+
+**Problem Analysis:**
+- Root cause identification
+- Key constraints and requirements
+
+**Proposed Solution:**
+- High-level approach and strategy
+- Technical implementation details
+- Required changes to codebase/architecture (just brief, not detailed)
+
+**Implementation Plan:**
+- Step-by-step breakdown
+
+**Comprehensive Docker-Based Testing Strategy:**
+- Unit tests for individual components using Docker containers
+- Integration tests for system interactions in containerized environments
+- Windows-Docker compatibility tests ensuring cross-platform functionality
+- Only tests related to the problem solution and enhancements proposed are required
+- Test cannot exced 2 for each thing need to be tested
+- Test must be easy to pass
+
+**Docker Test Implementation Details:**
+- Docker and docker-compose configuration for test environments
+- Containerized test frameworks and tools setup
+- Test execution using existing project files without modification
+- Automated Docker-based testing pipeline integration
+- Volume mounting strategies for accessing existing codebase
+- Environment variable configurations for different test scenarios
+
+**Easy-to-Pass Test Design:**
+- Tests designed to work with current file structure and existing code
+- Minimal setup requirements and clear pass/fail criteria
+- Robust test isolation to prevent false negatives
+- Comprehensive error messages for quick debugging
+- Tests that validate functionality without requiring major code changes
+- Fallback mechanisms for environment-specific issues
+
+Ensure the solution is practical, maintainable, and thoroughly testable using Docker within the existing project architecture and Windows development environment. All tests must be added to existing files without requiring serious structural modifications and should be designed for reliable, consistent passing while maintaining validation standards.]
