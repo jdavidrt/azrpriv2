@@ -88,11 +88,13 @@ All thoughts, need to be done and redacted like you where thinking before the ac
 ### Interaction Principles
 
 1. **Communication Style**
+
    - Provide clear, concise, and actionable responses
    - Maintain a technical yet approachable tone
    - Prioritize practical, implementation-focused guidance
 
 2. **Docker and Testing Best Practices**
+
    - Always rebuild Docker images after making code changes (`docker build -t [image_name] .`)
    - Verify local code changes are correct before testing in Docker containers
    - When Docker tests fail unexpectedly, check for file corruption or encoding issues during the build process
@@ -121,11 +123,13 @@ All thoughts, need to be done and redacted like you where thinking before the ac
 ### Stingray-Specific Guidelines
 
 4. **Function Parameter Handling**
+
    - Always check for `None` values before performing arithmetic operations (avoid division by None errors)
    - When making optional parameters, ensure consistency across related modules (powerspectrum vs crossspectrum)
    - Verify method signatures match between different classes (e.g., `from_lightcurve` vs `from_lc_iterable`)
 
 5. **Error Handling and Edge Cases**
+
    - Handle both light curves with and without error arrays (`_counts_err` attribute)
    - Implement proper fallback logic when segmentation is not requested (`segment_size=None`)
    - Test equivalence between different method implementations to ensure consistency
@@ -156,103 +160,12 @@ All thoughts, need to be done and redacted like you where thinking before the ac
 
 ## Problem
 
-Check from_lc_iterable and from_lightcurve for a single light curve
+[To be filled]
 
 ## Repository Info
 
-### Project Overview
-Stingray is a spectral-timing software package for astrophysical X-ray (and other) data, providing tools for:
-- Time series methods (power spectra, cross spectra, covariance spectra, lags)
-- FITS data file loading
-- Light curve and event list simulation
-
-### Development Environment
-
-#### Python Versions
-- Supported Python versions: 3.6 - 3.10
-- Uses setuptools and setuptools_scm for package management
-
-#### Key Dependencies
-- numpy (1.16 - 1.18)
-- astropy (versions 3 - 5, with LTS support)
-- pytest for testing
-- tox for test environment management
-
-### Development Commands
-
-#### Testing
-```bash
-# Run full test suite
-tox
-
-# Run tests for a specific Python version and configuration
-tox -e py39-test
-
-# Run tests directly with pytest
-pip install -e .[test]
-pytest
-
-# Run tests with coverage
-tox -e py39-test-cov
-```
-
-#### Documentation
-```bash
-# Install documentation dependencies
-pip install -e .[docs]
-
-# Generate documentation
-cd docs
-make html
-
-# Or use tox
-tox -e build_docs
-```
-
-#### Code Style
-```bash
-# Run code style checks
-tox -e codestyle
-# or
-flake8 stingray --max-line-length=100
-```
-
-### Project Structure
-- `stingray/`: Main package directory
-- `docs/`: Documentation source files
-- `tests/`: Test suite
-- `setup.py`, `setup.cfg`: Package configuration
-- `tox.ini`: Test environment configuration
-
-### Specific Notes
-- Uses Astropy guidelines for development
-- Comprehensive test suite with multiple dependency and version combinations
-- Aims to provide advanced spectral timing techniques with robust statistical framework
+[To be filled]
 
 ## Proposed Solution
 
-The functions `from_lc_iterable` and `from_lightcurve` are similar methods for calculating power/cross spectra, with key differences:
-
-1. `from_lc_iterable`:
-   - Accepts an iterable of multiple `Lightcurve` objects or numpy arrays
-   - Designed for processing multiple light curves at once
-   - Supports more complex input scenarios
-
-2. `from_lightcurve`:
-   - Accepts a single `Lightcurve` object
-   - Simpler interface for single light curve analysis
-   - Directly computes spectrum for one light curve
-
-### Key Differences
-- Input type (iterable vs single)
-- Flexibility of processing
-- Normalization and mean handling
-
-### Recommendations
-- Use `from_lc_iterable` for multiple or complex light curve inputs
-- Use `from_lightcurve` for straightforward, single light curve analysis
-
-### Test Strategy
-- Verify single light curve processing
-- Check normalization and segment handling
-- Validate statistical computations
+[To be filled]
