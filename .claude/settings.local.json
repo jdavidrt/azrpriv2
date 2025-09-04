@@ -3,7 +3,9 @@
     "allow": [
       "Bash(git checkout:*)",
       "Bash(cat:*)",
-      "Read(\\Users\\jdk_l\\OneDrive\\Documents\\FullTrace\\azr\\azrpriv/**)"
+      "Read(\\Users\\jdk_l\\OneDrive\\Documents\\FullTrace\\azr\\azrpriv/**)",
+      "Bash(python test:*)",
+      "Bash(python:*)"
     ],
     "deny": [],
     "ask": []

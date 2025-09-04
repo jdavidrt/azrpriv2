@@ -242,6 +242,36 @@ class TestAveragedCrossspectrumEvents(object):
         power2 = self.acs.power.real
         assert np.allclose(power1, power2, rtol=0.01)
 
+    def test_from_lc_iterable_single_lc_with_segments(self):
+        """Test from_lc_iterable with single light curves and segments"""
+        lc1 = self.events1.to_lc(self.dt)
+        lc2 = self.events2.to_lc(self.dt)
+        
+        # Test with segments
+        cs_iter = AveragedCrossspectrum.from_lc_iterable(
+            [lc1], [lc2], dt=self.dt, segment_size=self.segment_size, norm='none', silent=True)
+        cs_direct = AveragedCrossspectrum.from_lightcurve(
+            lc1, lc2, segment_size=self.segment_size, norm='none', silent=True)
+        
+        # Results should be equivalent
+        assert np.allclose(cs_iter.power, cs_direct.power, rtol=0.01)
+        assert cs_iter.m == cs_direct.m
+        assert np.allclose(cs_iter.freq, cs_direct.freq)
+
+    def test_from_lc_iterable_single_lc_no_segments(self):
+        """Test from_lc_iterable with single light curves without segmentation"""
+        lc1 = self.events1.to_lc(self.dt)
+        lc2 = self.events2.to_lc(self.dt)
+        
+        # Test without segments (single cross spectrum) - this was the main bug
+        cs_iter = AveragedCrossspectrum.from_lc_iterable([lc1], [lc2], dt=self.dt, silent=True)
+        cs_direct = AveragedCrossspectrum.from_lightcurve(lc1, lc2, silent=True)
+        
+        # Results should be equivalent
+        assert np.allclose(cs_iter.power, cs_direct.power, rtol=0.01)
+        assert np.allclose(cs_iter.freq, cs_direct.freq)
+        assert cs_iter.m == cs_direct.m == 1
+
     def test_from_lc_iter_with_err_works(self):
         def iter_lc_with_errs(iter_lc):
             for lc in iter_lc:

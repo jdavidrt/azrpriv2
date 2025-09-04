@@ -1240,13 +1240,20 @@ def powerspectrum_from_lc_iterable(iter_lc, dt, segment_size=None, norm="frac",
     def iterate_lc_counts(iter_lc):
         for lc in iter_lc:
             if hasattr(lc, "counts"):
-                n_bin = np.rint(segment_size / lc.dt).astype(int)
+                if segment_size is not None:
+                    n_bin = np.rint(segment_size / lc.dt).astype(int)
 
-                flux_iterable = get_flux_iterable_from_segments(
-                    lc.time, lc.gti, segment_size, n_bin, fluxes=lc.counts, errors=lc._counts_err
-                )
-                for out in flux_iterable:
-                    yield out
+                    flux_iterable = get_flux_iterable_from_segments(
+                        lc.time, lc.gti, segment_size, n_bin, fluxes=lc.counts, errors=lc._counts_err
+                    )
+                    for out in flux_iterable:
+                        yield out
+                else:
+                    # For single light curve without segmentation, yield the entire counts array
+                    if hasattr(lc, '_counts_err') and lc._counts_err is not None:
+                        yield (lc.counts, lc._counts_err)
+                    else:
+                        yield lc.counts
             elif isinstance(lc, Iterable):
                 yield lc
             else:

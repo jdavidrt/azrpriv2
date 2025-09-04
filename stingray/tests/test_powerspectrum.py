@@ -78,6 +78,34 @@ class TestAveragedPowerspectrumEvents(object):
             segment_size=self.segment_size, dt=self.dt, norm="leahy", silent=True)
         assert np.allclose(self.leahy_pds.power, pds_ev.power)
 
+    def test_from_lc_iterable_single_lc_with_segments(self):
+        """Test from_lc_iterable with single light curve and segments"""
+        lc = self.events.to_lc(self.dt)
+        
+        # Test with segments
+        pds_iter = AveragedPowerspectrum.from_lc_iterable(
+            [lc], dt=self.dt, segment_size=self.segment_size, norm="leahy", silent=True)
+        pds_direct = AveragedPowerspectrum.from_lightcurve(
+            lc, segment_size=self.segment_size, norm="leahy", silent=True)
+        
+        # Results should be equivalent
+        assert np.allclose(pds_iter.power, pds_direct.power)
+        assert pds_iter.m == pds_direct.m
+        assert np.allclose(pds_iter.freq, pds_direct.freq)
+
+    def test_from_lc_iterable_single_lc_no_segments(self):
+        """Test from_lc_iterable with single light curve without segmentation"""
+        lc = self.events.to_lc(self.dt)
+        
+        # Test without segments (single power spectrum) - this was the main bug
+        pds_iter = Powerspectrum.from_lc_iterable([lc], dt=self.dt, silent=True)
+        pds_direct = Powerspectrum.from_lightcurve(lc, silent=True)
+        
+        # Results should be equivalent
+        assert np.allclose(pds_iter.power, pds_direct.power)
+        assert np.allclose(pds_iter.freq, pds_direct.freq)
+        assert pds_iter.m == pds_direct.m == 1
+
     @pytest.mark.parametrize("err_dist", ["poisson", "gauss"])
     @pytest.mark.parametrize("norm", ["leahy", "abs", "frac", "none"])
     def test_method_norm(self, norm, err_dist):
