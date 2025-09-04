@@ -5,7 +5,8 @@
       "Bash(cat:*)",
       "Read(\\Users\\jdk_l\\OneDrive\\Documents\\FullTrace\\azr\\azrpriv/**)",
       "Bash(python test:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(docker run:*)"
     ],
     "deny": [],
     "ask": []

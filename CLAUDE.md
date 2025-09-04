@@ -92,6 +92,19 @@ All thoughts, need to be done and redacted like you where thinking before the ac
    - Maintain a technical yet approachable tone
    - Prioritize practical, implementation-focused guidance
 
+2. **Docker and Testing Best Practices**
+   - Always rebuild Docker images after making code changes (`docker build -t [image_name] .`)
+   - Verify local code changes are correct before testing in Docker containers
+   - When Docker tests fail unexpectedly, check for file corruption or encoding issues during the build process
+   - Use direct local testing scripts (like `test_our_fix.py`) to validate fixes before Docker deployment
+   - Remember that Docker containers may have different file states than local development environment
+
+3. **Code Testing and Validation Strategy**
+   - Create simple, standalone test scripts to verify core functionality works
+   - Test the main bug fix directly before writing comprehensive test suites
+   - When dealing with complex APIs, verify method signatures and parameter requirements before writing tests
+   - Use progressive testing: fix core issue → validate locally → add comprehensive tests → deploy to Docker
+
 ### Code Generation Preferences
 
 - Generate clean, well-documented, and efficient code
@@ -104,6 +117,24 @@ All thoughts, need to be done and redacted like you where thinking before the ac
 - Use this section to add repository-specific instructions
 - Define any unique project constraints or requirements
 - Highlight specific coding standards or architectural guidelines
+
+### Stingray-Specific Guidelines
+
+4. **Function Parameter Handling**
+   - Always check for `None` values before performing arithmetic operations (avoid division by None errors)
+   - When making optional parameters, ensure consistency across related modules (powerspectrum vs crossspectrum)
+   - Verify method signatures match between different classes (e.g., `from_lightcurve` vs `from_lc_iterable`)
+
+5. **Error Handling and Edge Cases**
+   - Handle both light curves with and without error arrays (`_counts_err` attribute)
+   - Implement proper fallback logic when segmentation is not requested (`segment_size=None`)
+   - Test equivalence between different method implementations to ensure consistency
+
+6. **Testing Strategy for Spectral Analysis Functions**
+   - Test both segmented and non-segmented cases for any spectral analysis function
+   - Verify numerical equivalence between alternative implementation approaches
+   - Include tests for different normalization schemes ("leahy", "frac", "abs", "none")
+   - Always test the core functionality (no crashes) before testing advanced features
 
 ## 🔍 Contextual Adaptation
 
