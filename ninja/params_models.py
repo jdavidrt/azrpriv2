@@ -73,19 +73,21 @@ class QueryModel(ParamModel):
             try:
                 from ninja.signature.details import is_pydantic_model
                 if is_pydantic_model(field_type):
-                    # Convert field names back to alias names for Pydantic model construction
-                    alias_data = {}
-                    for key, value in parsed_data.items():
-                        # Check if this field has an alias in the list_field_aliases mapping
-                        if key in list_field_aliases:
-                            alias_name = list_field_aliases[key]
-                            alias_data[alias_name] = value
-                        else:
-                            alias_data[key] = value
+                    # For pydantic models, we need to pass the raw query dict to let pydantic handle the aliases
+                    # Create a dict suitable for pydantic model construction
+                    pydantic_data = {}
+                    reverse_alias_map = {alias: field for field, alias in list_field_aliases.items()}
                     
-                    # Create the pydantic model instance with the alias data
-                    model_instance = field_type(**alias_data)
-                    return {field_name: model_instance}
+                    for key in request.GET.keys():
+                        if key in reverse_alias_map:
+                            # This is an aliased field - use alias name for pydantic
+                            pydantic_data[key] = request.GET.getlist(key) if reverse_alias_map[key] in list_fields else request.GET[key]
+                        elif key in list_fields:
+                            pydantic_data[key] = request.GET.getlist(key)
+                        else:
+                            pydantic_data[key] = request.GET[key]
+                    
+                    return {field_name: pydantic_data}
             except Exception:
                 # Fall back to original behavior
                 pass

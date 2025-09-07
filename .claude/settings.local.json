@@ -38,7 +38,8 @@
       "Read(/C:\\Users\\jdk_l\\OneDrive\\Documents\\FullTrace\\azr\\azrpriv/**)",
       "Read(/C:\\Users\\jdk_l\\OneDrive\\Documents\\FullTrace\\azr\\azrpriv\\ninja\\signature/**)",
       "Read(/C:\\Users\\jdk_l\\OneDrive\\Documents\\FullTrace\\azr\\azrpriv\\tests/**)",
-      "Bash(docker build:*)"
+      "Bash(docker build:*)",
+      "Bash(pip install:*)"
     ],
     "deny": [],
     "ask": []

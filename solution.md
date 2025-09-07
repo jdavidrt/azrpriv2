@@ -201,18 +201,24 @@ Run `python test_our_fix.py` to verify the fix works correctly for the original 
 
 ## 🏃 Test Execution Commands
 
-### Build Docker Image
+### Local Environment (Python with Django and Pydantic installed)
 ```bash
+# Install dependencies first
+pip install "pydantic>=1.6,<1.9" django pytest-django
+
+# Run tests
+python -m pytest tests/test_query.py::test_query_alias_basic tests/test_query.py::test_query_alias_mixed -v
+```
+
+### Docker Environment (Alternative)
+```bash
+# Build Docker Image
 docker build -t django-ninja .
-```
 
-### Run Tests (Windows Command Prompt)
-```bash
+# Run Tests (Windows Command Prompt)
 docker run --rm -v "%cd%":/app django-ninja bash -c "source /opt/miniconda3/etc/profile.d/conda.sh && conda activate testbed && pip install 'pydantic>=1.6,<1.9' django && cd /app && pytest tests/test_query.py::test_query_alias_basic tests/test_query.py::test_query_alias_mixed -v"
-```
 
-### Combined Build + Test (Windows Command Prompt)
-```bash
+# Combined Build + Test (Windows Command Prompt)
 docker build -t django-ninja . && docker run --rm -v "%cd%":/app django-ninja bash -c "source /opt/miniconda3/etc/profile.d/conda.sh && conda activate testbed && pip install 'pydantic>=1.6,<1.9' django && cd /app && pytest tests/test_query.py::test_query_alias_basic tests/test_query.py::test_query_alias_mixed -v"
 ```
 
@@ -222,4 +228,6 @@ tests/test_query.py::test_query_alias_basic PASSED
 tests/test_query.py::test_query_alias_mixed PASSED
 ```
 
-**Note**: For PowerShell use `${PWD}` instead of `"%cd%"`, for Git Bash/WSL use `$(pwd)` instead of `"%cd%"`
+**Notes**: 
+- For PowerShell use `${PWD}` instead of `"%cd%"`, for Git Bash/WSL use `$(pwd)` instead of `"%cd%"`
+- Local environment testing is simpler and faster than Docker for development
