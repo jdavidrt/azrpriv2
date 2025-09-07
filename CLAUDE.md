@@ -8,7 +8,7 @@ Stable commmit (ignore this info)
 - **Thought Process**:
   - You will first analyze the repository in full with the /init command and add that info to the _Repository Info_ section of this .MD file
   - Then you will analyze the _Problem_ and you will propose a solution on the _Proposed solution_ section.
-  - Then you will execute that _Proposed solution_ and generate a solve.md file, there is a solveExample.md so you must use it as guide.
+  - Then you will execute that _Proposed solution_ and generate a solve.md file, there is a solutionExample.md so you must use it as guide.
   - Remember to make the solve.md file as if you didn't know the solution, since there you will provide your thought process on how you reached that solution.
   - Remember to write high quality, not too verbose Thoughts, you have the guide to do it on the section _How to Write Quality Thoughts_
   - At the end of every solution, you will have to write tests for the solution you have done, please include this tests on existing test files.
@@ -162,60 +162,261 @@ All thoughts, need to be done and redacted like you where thinking before the ac
 
 ## Problem
 
-[To be filled]
+[Query parameters from Schema do not recognise lists with pydantic.Field alias
+Using a schema to encapsulate GET requests with a pydantic.Field to handle alias will result in a 422 error.
+
+class Filters(Schema):
+  slug__in: typing.List[str] = pydantic.Field(
+      None,
+      alias="slugs",
+  )
+
+@api.get("/filters/")
+def test_filters(request, filters: Filters = Query(...)):
+  return filters.dict()
+Expected response to http://127.0.0.1:8000/api/filters/?slugs=a&slugs=b
+
+{
+  "slug__in": [
+    "a", 
+    "b"
+  ]
+}
+Actual response to http://127.0.0.1:8000/api/filters/?slugs=a&slugs=b
+
+{
+  "detail": [
+    {
+      "loc": [
+        "query",
+        "filters",
+        "slugs"
+      ],
+      "msg": "value is not a valid list",
+      "type": "type_error.list"
+    }
+  ]
+}
+One work around is to not use aliases at all, but this is not ideal.
+
+class Filters(Schema):
+  slugs: typing.List[str] = pydantic.Field(None)]
 
 ## Repository Info
 
-[Perform a comprehensive analysis of this repository and update the Repository Info section in CLAUDE.md with essential context information that will enable Claude Code to work effectively with this codebase on Windows.
+### Project Architecture and Technologies
 
-Include the following key elements:
-- Project architecture and primary technologies used
-- Dependencies and build requirements specific to Windows
-- Critical file structures and entry points
-- Development workflow and testing procedures
-- Windows-specific configurations or considerations
-- Any unique patterns, conventions, or constraints within the codebase
+**Django Ninja** (v0.12.3) - A modern, fast web framework for building APIs with Django and Python 3.6+ type hints. This is the main project focused on creating a FastAPI-like experience for Django developers.
 
-Focus on information that would be crucial for understanding the project's structure, making modifications, and maintaining compatibility within a Windows development environment.]
+**Core Technologies:**
+- **Python 3.6+** - Primary programming language
+- **Django 2.0.13+** - Web framework foundation
+- **Pydantic 1.6-1.9** - Data validation and serialization with type hints
+- **OpenAPI/Swagger** - Automatic API documentation generation
+
+### Dependencies and Build Requirements
+
+**Development Environment:**
+- Uses `flit` as the build backend (`flit_core >=2,<4`)
+- Package management through `pyproject.toml` (modern Python packaging)
+- Editable installation via `flit install --deps develop --symlink`
+
+**Core Dependencies:**
+- Django >=2.0.13
+- pydantic >=1.6,<1.9
+
+**Development Dependencies:**
+- pytest, pytest-cov, pytest-django, pytest-asyncio (testing)
+- black, isort, flake8, mypy (code formatting and linting)
+- django-stubs (Django type stubs)
+- mkdocs, mkdocs-material, markdown-include (documentation)
+
+### Critical File Structure and Entry Points
+
+```
+├── ninja/                    # Main package directory
+│   ├── __init__.py          # Package exports (NinjaAPI, Schema, etc.)
+│   ├── main.py              # Core NinjaAPI class implementation
+│   ├── params.py            # Parameter classes (Path, Query, etc.)
+│   ├── params_functions.py  # Function wrappers for type hints
+│   ├── schema.py            # Schema base class with Django integration
+│   ├── router.py            # Router implementation
+│   ├── operation.py         # Operation handling
+│   └── openapi/             # OpenAPI schema generation
+├── tests/                   # Test suite
+│   ├── conftest.py          # Pytest configuration
+│   ├── demo_project/        # Test Django project
+│   └── test_*.py            # Individual test modules
+├── docs/                    # Documentation and examples
+├── pyproject.toml          # Project configuration and dependencies
+├── Makefile                # Development commands
+└── Dockerfile              # Containerization for testing
+```
+
+**Key Entry Points:**
+- `ninja/__init__.py` - Main package exports
+- `ninja/main.py` - NinjaAPI class (core API framework)
+- `ninja/params_functions.py` - Query parameter handling (directly related to the problem)
+
+### Development Workflow and Testing
+
+**Code Quality Tools:**
+- **Black** - Code formatting (88 char line length)
+- **isort** - Import sorting (black profile)
+- **flake8** - Linting (88 char line length, ignores E501)
+- **mypy** - Type checking (strict configuration, Python 3.6 target)
+
+**Testing Framework:**
+- **pytest** with Django integration
+- Test configuration in `tests/conftest.py` and `tests/pytest.ini`
+- Demo Django project for integration testing
+- Coverage reporting with pytest-cov
+
+**Available Commands (Makefile):**
+```bash
+make install    # Install dependencies with flit
+make lint       # Run all linters (black, isort, flake8, mypy)
+make fmt        # Format code (black, isort)
+make test       # Run tests with pytest
+make test-cov   # Run tests with coverage
+```
+
+### Windows Compatibility Considerations
+
+**Cross-Platform Design:**
+- Pure Python codebase with no OS-specific dependencies
+- Uses standard Python/Django libraries compatible with Windows
+- Docker support for consistent testing environments across platforms
+- Path handling uses `os.path` for Windows compatibility
+
+**Windows Development Setup:**
+- VSCode configuration present (`.vscode/settings.json`)
+- No Windows-specific scripts found (no .bat, .cmd, .ps1 files)
+- Standard Python package management compatible with Windows pip/conda
+
+**Docker Configuration:**
+- Ubuntu 22.04 based container for Linux testing
+- Conda environment setup for consistent Python environment
+- Testbed environment with Python 3.9 and all dev dependencies
+
+### Django Ninja Specific Patterns
+
+**Parameter Handling Architecture:**
+- Dual-layer parameter system: `params.py` (classes) and `params_functions.py` (functions)
+- Query parameter processing through `ninja.params.Query` class
+- Pydantic integration for validation and type conversion
+- Schema-based request/response handling with Django model integration
+
+**Problem Context:**
+The issue described involves query parameter handling with Pydantic Field aliases for list types, specifically in the `Query` parameter processing system.
 
 ## Proposed Solution
 
-[Analyze the problem described in the Problem section of CLAUDE.md and provide a comprehensive proposed solution. Structure your response as follows:
-
 **Problem Analysis:**
-- Root cause identification
-- Key constraints and requirements
+
+*Root cause identification:*
+The issue occurs in Django Ninja's query parameter processing system where Pydantic Field aliases are not properly recognized for list-type parameters. The problem stems from two interconnected components:
+
+1. **Parser Level (`ninja/parser.py:parse_querydict`)**: The `parse_querydict` method only looks for actual query parameter names in `list_fields` array, not their aliases. It processes `request.GET.keys()` directly without considering field aliases.
+
+2. **Collection Field Detection (`ninja/signature/details.py:detect_collection_fields`)**: The `detect_collection_fields` function correctly identifies list-type fields but only stores the field names, not their aliases. When a Pydantic model uses `alias="slugs"` for field `slug__in`, the system knows `slug__in` is a list field but doesn't know to look for the `slugs` parameter in the query string.
+
+*Key constraints and requirements:*
+- Must maintain backward compatibility with existing non-aliased query parameters
+- Must work within existing Django Ninja architecture without breaking changes
+- Must support all Pydantic Field alias functionality for list types
+- Must handle both single values and multiple values correctly
+- Must integrate with existing OpenAPI schema generation
 
 **Proposed Solution:**
-- High-level approach and strategy
-- Technical implementation details
-- Required changes to codebase/architecture (just brief, not detailed)
+
+*High-level approach and strategy:*
+Implement alias-aware query parameter processing by extending the existing `parse_querydict` method and collection field detection system to map aliases to their corresponding field names for list-type parameters.
+
+*Technical implementation details:*
+1. **Extend Collection Field Detection**: Modify `detect_collection_fields` in `ninja/signature/details.py` to return both field names and their aliases, creating a mapping structure.
+
+2. **Enhance Parser Logic**: Update `parse_querydict` in `ninja/parser.py` to check for both actual field names and their aliases when processing query parameters.
+
+3. **Maintain QueryModel Integration**: Ensure `QueryModel.get_request_data()` in `ninja/params_models.py` properly passes alias information to the parser.
+
+*Required changes to codebase/architecture:*
+- `ninja/signature/details.py`: Extend collection field detection to include alias mapping
+- `ninja/parser.py`: Update parse_querydict to handle field aliases for collections  
+- `ninja/params_models.py`: Enhance QueryModel to pass alias information
+- `tests/test_query.py`: Add comprehensive test cases for list aliases
 
 **Implementation Plan:**
-- Step-by-step breakdown
+
+1. **Step 1**: Enhance collection field detection system
+   - Modify `detect_collection_fields` to return `{field_name: alias}` mapping
+   - Update signature creation to store alias mappings in model metadata
+
+2. **Step 2**: Update parser to handle aliases
+   - Modify `parse_querydict` to accept alias mapping parameter
+   - Implement logic to check both field names and aliases for list processing
+   - Ensure proper data structure creation with correct field names
+
+3. **Step 3**: Integrate alias support in QueryModel
+   - Update `QueryModel.get_request_data()` to extract and pass alias mappings
+   - Ensure seamless integration with existing parameter processing
+
+4. **Step 4**: Add comprehensive test coverage
+   - Create test cases for basic alias functionality with lists
+   - Test edge cases (mixed aliases/non-aliases, single vs multiple values)
 
 **Comprehensive Docker-Based Testing Strategy:**
-- Unit tests for individual components using Docker containers
-- Integration tests for system interactions in containerized environments
-- Windows-Docker compatibility tests ensuring cross-platform functionality
-- Only tests related to the problem solution and enhancements proposed are required
-- Test cannot exced 2 for each thing need to be tested
-- Test must be easy to pass
+
+*Unit tests for individual components:*
+- **Test 1**: `test_query_alias_basic` - Basic list alias functionality (`?slugs=a&slugs=b` → `{"slug__in": ["a", "b"]}`)
+- **Test 2**: `test_query_alias_mixed` - Mixed aliased and non-aliased parameters in same request
+
+*Integration tests for system interactions:*
+- **Test 1**: `test_query_alias_full_request` - End-to-end API request with aliased list parameters
+- **Test 2**: `test_query_alias_openapi_schema` - Verify OpenAPI schema generation works correctly with aliases
 
 **Docker Test Implementation Details:**
-- Docker and docker-compose configuration for test environments
-- Containerized test frameworks and tools setup
-- Test execution using existing project files without modification
-- Automated Docker-based testing pipeline integration
-- Volume mounting strategies for accessing existing codebase
-- Environment variable configurations for different test scenarios
+
+*Docker configuration for test environments:*
+- Use existing `Dockerfile` with testbed conda environment (Python 3.9)
+- Volume mount source code for live testing: `-v ${PWD}:/app`
+- Execute tests within containerized environment with all dependencies
+
+*Test execution strategy:*
+```bash
+# Build test environment
+docker build -t ninja-test .
+
+# Run specific alias tests  
+docker run --rm -v ${PWD}:/app ninja-test pytest tests/test_query.py::test_query_alias_basic -v
+
+# Run full test suite to ensure no regressions
+docker run --rm -v ${PWD}:/app ninja-test pytest tests/test_query.py -v
+```
+
+*Environment variable configurations:*
+- `DJANGO_SETTINGS_MODULE=demo.settings` (already configured)
+- `NINJA_SKIP_REGISTRY=yes` (already configured in conftest.py)
 
 **Easy-to-Pass Test Design:**
-- Tests designed to work with current file structure and existing code
-- Minimal setup requirements and clear pass/fail criteria
-- Robust test isolation to prevent false negatives
-- Comprehensive error messages for quick debugging
-- Tests that validate functionality without requiring major code changes
-- Fallback mechanisms for environment-specific issues
 
-Ensure the solution is practical, maintainable, and thoroughly testable using Docker within the existing project architecture and Windows development environment. All tests must be added to existing files without requiring serious structural modifications and should be designed for reliable, consistent passing while maintaining validation standards.]
+*Test implementation approach:*
+- Add test cases to existing `tests/test_query.py` file using established patterns
+- Use existing `NinjaClient` and router setup from current test infrastructure  
+- Follow existing parametrized test format for consistency
+- Implement progressive test difficulty: basic functionality first, edge cases second
+
+*Robust test design features:*
+- Clear test names describing exact functionality being tested
+- Expected response structures clearly defined as constants
+- Fallback assertions for partial functionality during development
+- Comprehensive error messages using existing Django Ninja error format
+- Tests designed to work with current Pydantic 1.6-1.9 version constraints
+
+*Windows-Docker compatibility:*
+- Volume mounting handles Windows path translation automatically
+- Tests use existing cross-platform pytest framework  
+- Docker environment provides consistent Linux runtime regardless of host OS
+- All test dependencies already configured in Docker image
+
+The solution maintains full backward compatibility, integrates seamlessly with existing Django Ninja architecture, and provides comprehensive test coverage using the established Docker-based testing infrastructure.

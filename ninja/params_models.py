@@ -58,7 +58,39 @@ class QueryModel(ParamModel):
         cls, request: HttpRequest, api: "NinjaAPI", path_params: DictStrAny
     ) -> Optional[DictStrAny]:
         list_fields = getattr(cls, "_collection_fields", [])
-        return api.parser.parse_querydict(request.GET, list_fields, request)
+        list_field_aliases = getattr(cls, "_collection_field_aliases", {})
+        
+        # Parse the querydict to get the raw field data
+        parsed_data = api.parser.parse_querydict(request.GET, list_fields, request, list_field_aliases)
+        
+        # Check if this is a single Pydantic model case
+        annotations = getattr(cls, '__annotations__', {})
+        if len(annotations) == 1 and parsed_data:
+            field_name = list(annotations.keys())[0]
+            field_type = annotations[field_name]
+            
+            # Check if the field type is a pydantic model
+            try:
+                from ninja.signature.details import is_pydantic_model
+                if is_pydantic_model(field_type):
+                    # Convert field names back to alias names for Pydantic model construction
+                    alias_data = {}
+                    for key, value in parsed_data.items():
+                        # Check if this field has an alias in the list_field_aliases mapping
+                        if key in list_field_aliases:
+                            alias_name = list_field_aliases[key]
+                            alias_data[alias_name] = value
+                        else:
+                            alias_data[key] = value
+                    
+                    # Create the pydantic model instance with the alias data
+                    model_instance = field_type(**alias_data)
+                    return {field_name: model_instance}
+            except Exception:
+                # Fall back to original behavior
+                pass
+        
+        return parsed_data
 
 
 class PathModel(ParamModel):
@@ -115,7 +147,8 @@ class FormModel(ParamModel):
         cls, request: HttpRequest, api: "NinjaAPI", path_params: DictStrAny
     ) -> Optional[DictStrAny]:
         list_fields = getattr(cls, "_collection_fields", [])
-        return api.parser.parse_querydict(request.POST, list_fields, request)
+        list_field_aliases = getattr(cls, "_collection_field_aliases", {})
+        return api.parser.parse_querydict(request.POST, list_fields, request, list_field_aliases)
 
 
 class FileModel(ParamModel):
@@ -124,4 +157,5 @@ class FileModel(ParamModel):
         cls, request: HttpRequest, api: "NinjaAPI", path_params: DictStrAny
     ) -> Optional[DictStrAny]:
         list_fields = getattr(cls, "_collection_fields", [])
-        return api.parser.parse_querydict(request.FILES, list_fields, request)
+        list_field_aliases = getattr(cls, "_collection_field_aliases", {})
+        return api.parser.parse_querydict(request.FILES, list_fields, request, list_field_aliases)

@@ -13,6 +13,7 @@ __all__ = [
     "is_pydantic_model",
     "is_collection_type",
     "detect_collection_fields",
+    "detect_collection_field_aliases",
 ]
 
 FuncParam = namedtuple("FuncParam", ["name", "source", "annotation", "is_collection"])
@@ -49,7 +50,7 @@ class ViewSignature:
             attrs["_in"] = cls._in()
 
             if len(args) == 1:
-                if cls._in() == "body" or is_pydantic_model(args[0].annotation):
+                if cls._in() == "body" or (is_pydantic_model(args[0].annotation) and cls._in() != "query"):
                     attrs["_single_attr"] = args[0].name
 
             # adding annotations:
@@ -57,6 +58,9 @@ class ViewSignature:
 
             # collection fields:
             attrs["_collection_fields"] = detect_collection_fields(args)
+            
+            # collection field aliases for query parameter processing:
+            attrs["_collection_field_aliases"] = detect_collection_field_aliases(args)
 
             base_cls = cls._model
             model_cls = type(cls_name, (base_cls,), attrs)
@@ -136,5 +140,32 @@ def detect_collection_fields(args: List[FuncParam]) -> List[str]:
         for name, annotation in args[0].annotation.__annotations__.items():
             if is_collection_type(annotation):
                 result.append(name)
+
+    return result
+
+
+def detect_collection_field_aliases(args: List[FuncParam]) -> Dict[str, str]:
+    """
+    Detects field aliases for collection (list-type) fields to support Pydantic Field aliases 
+    in query parameter processing.
+    
+    Returns a dict mapping field names to their aliases: {field_name: alias_name}
+    Only includes fields that are both collections and have aliases defined.
+    """
+    result = {}
+
+    if len(args) == 1 and is_pydantic_model(args[0].annotation):
+        # Check for pydantic model with collection fields that have aliases
+        model_cls = args[0].annotation
+        
+        for field_name, field_info in model_cls.__fields__.items():
+            # For pydantic 1.x, use outer_type_ which contains the full type annotation
+            field_type = getattr(field_info, 'outer_type_', field_info.type_)
+            
+            # Check if this field is a collection type and has an alias
+            if (is_collection_type(field_type) and 
+                hasattr(field_info, 'alias') and 
+                field_info.alias is not None):
+                result[field_name] = field_info.alias
 
     return result

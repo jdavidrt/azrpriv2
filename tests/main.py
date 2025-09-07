@@ -1,7 +1,21 @@
-from ninja import Router, Query, Path
+from ninja import Router, Query, Path, Schema
+import typing
+import pydantic
 
 
 router = Router()
+
+
+# Schema definitions for alias testing
+class FiltersWithAlias(Schema):
+    slug__in: typing.List[str] = pydantic.Field(
+        None,
+        alias="slugs",
+    )
+
+class MixedFilters(Schema):
+    slug__in: typing.List[str] = pydantic.Field(None, alias="slugs")
+    category: str = None
 
 
 @router.get("/text")
@@ -175,3 +189,12 @@ def get_query_param_required(request, query=Query(...)):
 @router.get("/query/param-required/int")
 def get_query_param_required_type(request, query: int = Query(...)):
     return f"foo bar {query}"
+
+# Test routes for query parameter list aliases
+@router.get("/test-query-alias-basic/")
+def test_query_alias_basic_endpoint(request, filters: FiltersWithAlias = Query(...)):
+    return filters.dict()
+
+@router.get("/test-query-alias-mixed/") 
+def test_query_alias_mixed_endpoint(request, filters: MixedFilters = Query(...)):
+    return filters.dict()
